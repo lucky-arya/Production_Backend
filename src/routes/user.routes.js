@@ -1,7 +1,7 @@
 import { Router } from "express"
 
 import { ApiResponse } from "../utils/ApiResponse.js"
-import { loginUser, logoutUser, registerUser } from "../controllers/user.controllers.js"
+import { loginUser, logoutUser, registerUser ,refreshAccessToken } from "../controllers/user.controllers.js"
 
 import { upload } from "../middlewares/multer.middlewares.js"
 import { verifyJWT } from "../middlewares/auth.middlewares.js"
@@ -21,6 +21,7 @@ router.post("/login",loginUser)
 // secured routes 
 
 router.post("/logout",verifyJWT,logoutUser)
+router.post("/refresh-token",refreshAccessToken)
 
 
 export default router

@@ -50,7 +50,7 @@ const userSchema = Schema({
     },
     refreshToken : {
         type : String,
-        // required : true
+        required : true
     }
 },
     { timestamps: true })
@@ -69,10 +69,10 @@ userSchema.methods.isPasswordCorrect = async function (password){
     return await bycrpt.compare(password , this.password)
 }
 
-userSchema.methods.generateAccessTokens = function (){
-   return   accessToken = jwt.sign(
+userSchema.methods.generateAccessToken = function (){
+   return jwt.sign(
         {
-            _Id : this._id,
+            _id : this._id,
             email : this.email,
             username : this.username,
             fullName : this.fullName
@@ -86,9 +86,9 @@ userSchema.methods.generateAccessTokens = function (){
 
 
 userSchema.methods.generateRefreshToken = function (){
-    return  refreshToken = jwt.sign(
+    return jwt.sign(
         {
-            Id : this._id,
+            _id : this._id,
             email : this.email,
             username : this.username,
             fullName : this.fullName
@@ -97,6 +97,6 @@ userSchema.methods.generateRefreshToken = function (){
         {
             expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN
         }
-    ) 
+    )
 }
 export const User = model("User", userSchema)
