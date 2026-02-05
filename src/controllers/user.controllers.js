@@ -198,7 +198,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     // send response with new tokens and cookies
 
 try {
-        const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken || req.headers("Authorization").replace("Bearer ","")
+        const incomingRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken || req.header("Authorization")?.replace("Bearer ","")
     
         if(!incomingRefreshToken){
             throw new ApiError(401, "Refresh token is required , unauthorized access")
@@ -212,24 +212,20 @@ try {
             throw new ApiError(401, "User not found , unauthorized access")
         }   
     
-        if(!user) {
-            throw new ApiError(401, "User not found , Invalid refresh token")
-        }
-    
         if(user.refreshToken !== incomingRefreshToken){
             throw new ApiError(401, "Invalid refresh token , unauthorized access")
         }
     
-        const { accessToken, newrefreshToken } = await generateAccessAndRefreshTokens(user._id)
+        const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id)
     
         const cookieOptions = {
             httpOnly: true,
             secure: true,
         }
     
-        return res.status(200).cookie("refreshToken", newrefreshToken, cookieOptions).cookie("accessToken", accessToken, cookieOptions).json(new ApiResponse(200, {
+        return res.status(200).cookie("refreshToken", refreshToken, cookieOptions).cookie("accessToken", accessToken, cookieOptions).json(new ApiResponse(200, {
             accessToken,
-            refreshToken: newrefreshToken
+            refreshToken
         }, "Access token refreshed successfully"))
 } catch (error) {
     throw new ApiError(401,error?.message || "something went wrong while refreshing access token")
