@@ -17,7 +17,9 @@ export const uploadOnCloudinary = async (localfilePath) => {
         if (!cloudinary.config().cloud_name) {
             configureCloudinary()
         }
+        //if file alredy exists on cloudinary with same name, it will be overwritten
         
+
         if (!fs.existsSync(localfilePath)) {
             throw new Error("File Path not found")
         }
@@ -32,6 +34,19 @@ export const uploadOnCloudinary = async (localfilePath) => {
         if (fs.existsSync(localfilePath)) {
             fs.unlinkSync(localfilePath)
         }
+        throw error
+    }
+}
+
+
+export const deleteFromCloudinary = async (publicId) => {
+    try {
+        if (!cloudinary.config().cloud_name) {
+            configureCloudinary()
+        }
+        const result = await cloudinary.uploader.destroy(publicId)
+        return result
+    } catch (error) {
         throw error
     }
 }
