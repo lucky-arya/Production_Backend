@@ -7,6 +7,7 @@ import {
   uploadOnCloudinary,
 } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import { upload } from "../middlewares/multer.middlewares.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -186,8 +187,8 @@ const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
     req.user._id,
     {
-      $set: {
-        refreshToken: undefined,
+      $unset: {
+        refreshToken: 1, // remove refresh token from document in db
       },
     },
     { new: true },
@@ -501,7 +502,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     }
   ]);
 
-  console.log(channel)
+  // console.log(channel)
 
   if (!channel?.length) {
     throw new ApiError(404, "Channel not found")
@@ -519,7 +520,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
 
   const user = await User.aggregate([
     {
-      $match: new mongoose.Types.ObjectId(req.user?._id)
+      $match: { _id: new mongoose.Types.ObjectId(req.user?._id) }
     },
     {
       $lookup: {
