@@ -32,4 +32,9 @@ import homeRouter from "./routes/home.routes.js"
 app.use("/", homeRouter)
 app.use("/api/v1/users",userRouter) //  http://localhost:5000/api/v1/users/register
 
+// payment route
+import paymentRouter from "./routes/payment.routes.js"
+app.use("/api/v1", paymentRouter) // http://localhost:5000/api/v1/create-order
+
+
 export { app }
