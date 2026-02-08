@@ -1,10 +1,11 @@
 # Production Backend
 
-A production-ready Node.js backend API built with Express.js, MongoDB, and modern best practices. This project demonstrates a professional backend architecture with user authentication, file uploads, and cloud storage integration.
+A production-ready Node.js backend API built with Express.js, MongoDB, and modern best practices. This project demonstrates a professional backend architecture with user authentication, file uploads, cloud storage integration, and Razorpay payment integration.
 
 ![Node.js](https://img.shields.io/badge/Node.js-v18+-green.svg)
 ![Express.js](https://img.shields.io/badge/Express.js-v5-blue.svg)
 ![MongoDB](https://img.shields.io/badge/MongoDB-v6+-green.svg)
+![Razorpay](https://img.shields.io/badge/Razorpay-Integrated-blue.svg)
 ![License](https://img.shields.io/badge/License-ISC-yellow.svg)
 
 ## 📋 Table of Contents
@@ -16,12 +17,14 @@ A production-ready Node.js backend API built with Express.js, MongoDB, and moder
 - [Environment Variables](#-environment-variables)
 - [API Endpoints](#-api-endpoints)
 - [Authentication](#-authentication)
+- [Payment Integration](#-payment-integration)
 - [File Upload](#-file-upload)
 - [Error Handling](#-error-handling)
 - [Author](#-author)
 
 ## ✨ Features
 
+- **Payment Integration** - Razorpay payment gateway with order creation & verification
 - **User Authentication** - Complete auth flow with JWT (Access & Refresh Tokens)
 - **Secure Password Hashing** - Using bcrypt for password encryption
 - **File Uploads** - Multer middleware for handling multipart/form-data
@@ -44,19 +47,19 @@ A production-ready Node.js backend API built with Express.js, MongoDB, and moder
 | **Bcrypt** | Password hashing library |
 | **Cloudinary** | Cloud-based media management |
 | **Multer** | Multipart form data handling |
+| **Razorpay** | Payment gateway integration |
 | **Cookie-Parser** | Cookie parsing middleware |
 | **CORS** | Cross-origin resource sharing |
 | **Dotenv** | Environment variable management |
 
 ## 📁 Project Structure
 
-```
-production-backend/
-├── public/
+```├── payment.html       # Payment form interface
 │   └── temp/              # Temporary file storage
 ├── src/
 │   ├── controllers/       # Request handlers
 │   │   ├── home.controller.js
+│   │   ├── payment.controller.js
 │   │   └── user.controllers.js
 │   ├── db/                # Database configuration
 │   │   └── index.js
@@ -64,10 +67,12 @@ production-backend/
 │   │   ├── auth.middlewares.js
 │   │   └── multer.middlewares.js
 │   ├── models/            # Mongoose schemas
+│   │   ├── subscriptions.models.js
 │   │   ├── user.models.js
 │   │   └── video.models.js
 │   ├── routes/            # API routes
 │   │   ├── home.routes.js
+│   │   ├── payment.routes.js
 │   │   └── user.routes.js
 │   ├── utils/             # Utility functions
 │   │   ├── ApiError.js
@@ -77,6 +82,11 @@ production-backend/
 │   ├── app.js             # Express app configuration
 │   ├── constants.js       # Application constants
 │   └── index.js           # Entry point
+├── .env                   # Environment variables (create this)
+├── .gitignore
+├── package.json
+├── PAYMENT_TESTING_GUIDE.md
+├── PRODUCTION_PAYMENT_FLOW.md           # Entry point
 ├── .env                   # Environment variables (create this)
 ├── .gitignore
 ├── package.json
@@ -134,6 +144,10 @@ CORS_ORIGIN=*
 MONGO_URI=mongodb://localhost:27017/your_database_name
 
 # JWT Configuration
+
+# Razorpay Configuration
+RAZORPAY_KEY_ID=your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
 ACCESS_TOKEN_SECRET=your_access_token_secret_key
 ACCESS_TOKEN_EXPIRES_IN=1d
 REFRESH_TOKEN_SECRET=your_refresh_token_secret_key
@@ -147,6 +161,13 @@ CLOUDINARY_API_SECRET=your_api_secret
 
 ## 📡 API Endpoints
 
+
+### Payment Routes (`/api/v1`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `POST` | `/create-order` | Create Razorpay order | ❌ |
+| `POST` | `/payment/verify` | Verify payment signature | ❌ |
 ### Base URL
 ```
 http://localhost:5000
@@ -238,7 +259,99 @@ Authorization: Bearer <access_token>
 This API uses **JWT (JSON Web Tokens)** for authentication with a dual-token strategy:
 
 ### Access Token
-- Short-lived token (configurable via `ACCESS_TOKEN_EXPIRES_IN`)
+## 💳 Payment Integration
+
+This API integrates **Razorpay** payment gateway for secure payment processing.
+
+### Payment Flow
+
+1. **Create Order** - Backend creates a Razorpay order
+2. **Payment Processing** - Frontend opens Razorpay checkout modal
+3. **Payment Verification** - Backend verifies payment signature using HMAC SHA256
+
+### Create Order
+
+```http
+POST /api/v1/create-order
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "amount": 500,
+  "currency": "INR",
+  "receipt": "receipt_123"
+}
+```
+
+**Response (201):**
+```json
+{
+  "statusCode": 201,
+  "data": {
+    "id": "order_xxxxx",
+    "amount": 50000,
+    "currency": "INR",
+    "receipt": "receipt_123",
+    "status": "created"
+  },
+  "message": "Order created successfully",
+  "success": true
+}
+```
+
+### Verify Payment
+
+```http
+POST /api/v1/payment/verify
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "razorpay_payment_id": "pay_xxxxx",
+  "razorpay_order_id": "order_xxxxx",
+  "razorpay_signature": "signature_hash"
+}
+```
+
+**Response (200):**
+```json
+{
+  "statusCode": 200,
+  "data": {
+    "paymentId": "pay_xxxxx",
+    "orderId": "order_xxxxx"
+  },
+  "message": "Payment verified successfully",
+  "success": true
+}
+```
+
+### Payment Page
+
+Access the payment form at: **http://localhost:3000/payment.html**
+
+### Testing Payments
+
+
+### Subscription Model
+```javascript
+{
+  subscriber: User,      // Reference to User (who is subscribing)
+  channel: User,         // Reference to User (channel being subscribed to)
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+**Test Card Details:**
+- **Card Number:** `4111 1111 1111 1111`
+- **Expiry:** Any future date (e.g., `12/28`)
+- **CVV:** Any 3 digits (e.g., `123`)
+
+For detailed testing guide, see [PAYMENT_TESTING_GUIDE.md](PAYMENT_TESTING_GUIDE.md)
 - Used for authenticating API requests
 - Stored in HTTP-only cookies
 
